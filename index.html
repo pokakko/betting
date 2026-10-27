@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Will CY Reply?!</title>
+<link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="marquee" aria-hidden="true">
+  <div class="marquee-track">
+    <span>🚫 NOT REAL MONEY</span><span>✨ JUST VIBES</span><span>📱 WILL THEY TEXT BACK?</span><span>💸 PLACE YOUR BETS</span><span>👻 LEFT ON READ?</span>
+    <span>🚫 NOT REAL MONEY</span><span>✨ JUST VIBES</span><span>📱 WILL THEY TEXT BACK?</span><span>💸 PLACE YOUR BETS</span><span>👻 LEFT ON READ?</span>
+  </div>
+</div>
+
+<main>
+  <header class="hero">
+    <div class="sticker s1">100% FAKE</div>
+    <h1>WILL <span class="cy">CY</span><br>REPLY<span class="qm">?!</span></h1>
+    <p class="sub">The most important market of the century. Pick a side, stake some vibe coins, pray.</p>
+  </header>
+
+  <section class="countdown" aria-live="off">
+    <div class="qtag" id="cd-tag">⏳ RESULT: TBC</div>
+    <p class="cd-title">TRUTH DROPS IN</p>
+    <div class="cd" id="cd">
+      <div><b id="cd-d">00</b><small>days</small></div>
+      <div><b id="cd-h">00</b><small>hrs</small></div>
+      <div><b id="cd-m">00</b><small>min</small></div>
+      <div><b id="cd-s">00</b><small>sec</small></div>
+    </div>
+    <p class="cd-note" id="cd-note">Bets close &amp; the result is revealed Thursday 29 Oct, 12:00 PM (SGT)</p>
+  </section>
+
+  <section class="wallet">
+    <div>
+      <small>YOUR STASH</small>
+      <div class="balance"><span id="balance">1000</span> <em>🪙</em></div>
+    </div>
+    <button class="ghost" id="reset">↺ reset</button>
+  </section>
+
+  <section class="quote" aria-live="polite">
+    <div class="qtag">📣 EVIDENCE: CY ONCE SAID</div>
+    <blockquote id="quote"></blockquote>
+    <button class="ghost dark" id="next-quote">another one 🔁</button>
+  </section>
+
+  <section class="step">
+    <h2><b>1</b> PICK YOUR FIGHTER</h2>
+    <div class="options">
+      <button class="opt yes" data-side="yes" aria-pressed="false">
+        <span class="emoji">📱</span>
+        <span class="label">CY IS GOING<br>TO REPLY</span>
+        <span class="odds"><span id="odds-yes">1.00</span>x</span>
+        <span class="bar"><i id="bar-yes"></i></span>
+        <span class="pool"><span id="pool-yes">0</span> 🪙 in the pot</span>
+      </button>
+      <button class="opt no" data-side="no" aria-pressed="false">
+        <span class="emoji">👻</span>
+        <span class="label">CY IS NOT<br>REPLYING</span>
+        <span class="odds"><span id="odds-no">1.00</span>x</span>
+        <span class="bar"><i id="bar-no"></i></span>
+        <span class="pool"><span id="pool-no">0</span> 🪙 in the pot</span>
+      </button>
+    </div>
+  </section>
+
+  <section class="step">
+    <h2><b>2</b> HOW BRAVE ARE WE?</h2>
+    <div class="chips" id="chips">
+      <button data-amt="10">10</button>
+      <button data-amt="50">50</button>
+      <button data-amt="100">100</button>
+      <button data-amt="250">250</button>
+      <button data-amt="all" class="allin">ALL IN 🔥</button>
+    </div>
+    <label class="custom">
+      <span>or type your own</span>
+      <input id="amount" type="number" min="1" step="1" inputmode="numeric" placeholder="0">
+    </label>
+    <div class="payout">
+      <span>Potential win</span>
+      <strong id="potential">—</strong>
+    </div>
+    <button class="place" id="place" disabled>PLACE BET 🎲</button>
+    <p class="msg" id="msg" role="status"></p>
+  </section>
+
+  <section class="step">
+    <h2><b>3</b> YOUR BET SLIP</h2>
+    <ul id="slip" class="slip"></ul>
+  </section>
+
+  <section class="step reveal">
+    <h2><b>4</b> THE MOMENT OF TRUTH</h2>
+    <div id="locked" class="locked">
+      <div class="lock">🔒</div>
+      <strong>RESULT: TBC</strong>
+      <p>Unlocks when the countdown hits zero. Until then, nobody knows. Not even CY. 👀</p>
+    </div>
+    <div id="settle-panel" hidden>
+      <p class="small">Did CY actually text back? Settle all open bets:</p>
+      <div class="settle">
+        <button id="settle-yes" class="yes">CY REPLIED 🎉</button>
+        <button id="settle-no" class="no">LEFT ON READ 💀</button>
+      </div>
+    </div>
+  </section>
+
+  <footer>made for fun · no real money, ever · be nice to CY 💛</footer>
+</main>
+
+<canvas id="confetti"></canvas>
+<script src="app.js"></script>
+</body>
+</html>
