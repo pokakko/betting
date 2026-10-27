@@ -23,18 +23,6 @@
     <p class="sub">The most important market of the century. Pick a side, stake some vibe coins, pray.</p>
   </header>
 
-  <section class="countdown" aria-live="off">
-    <div class="qtag" id="cd-tag">⏳ RESULT: TBC</div>
-    <p class="cd-title">TRUTH DROPS IN</p>
-    <div class="cd" id="cd">
-      <div><b id="cd-d">00</b><small>days</small></div>
-      <div><b id="cd-h">00</b><small>hrs</small></div>
-      <div><b id="cd-m">00</b><small>min</small></div>
-      <div><b id="cd-s">00</b><small>sec</small></div>
-    </div>
-    <p class="cd-note" id="cd-note">Bets close &amp; the result is revealed Thursday 29 Oct, 12:00 PM (SGT)</p>
-  </section>
-
   <section class="wallet">
     <div>
       <small>YOUR STASH</small>
@@ -49,7 +37,15 @@
     <button class="ghost dark" id="next-quote">another one 🔁</button>
   </section>
 
-  <section class="step">
+  <nav class="stepper" id="stepper" aria-label="Steps">
+    <button data-go="1" class="on"><b>1</b><span>PICK</span></button>
+    <button data-go="2"><b>2</b><span>STAKE</span></button>
+    <button data-go="3"><b>3</b><span>SLIP</span></button>
+    <button data-go="4"><b>4</b><span>TRUTH</span></button>
+  </nav>
+
+  <!-- STEP 1 -->
+  <section class="step" data-step="1">
     <h2><b>1</b> PICK YOUR FIGHTER</h2>
     <div class="options">
       <button class="opt yes" data-side="yes" aria-pressed="false">
@@ -66,11 +62,26 @@
         <span class="bar"><i id="bar-no"></i></span>
         <span class="pool"><span id="pool-no">0</span> 🪙 in the pot</span>
       </button>
+      <div class="mine-wrap">
+        <button class="opt mine" data-side="custom" aria-pressed="false">
+          <span class="emoji">✍️</span>
+          <span class="label">MY OWN PREDICTION</span>
+          <span class="odds">2.00x</span>
+          <span class="pool">fixed odds · you judge it yourself on result day</span>
+        </button>
+        <input id="custom-text" type="text" maxlength="60" placeholder="e.g. CY replies with just a sticker" aria-label="Your own prediction">
+      </div>
+    </div>
+    <div class="nav">
+      <span></span>
+      <button class="next" id="to-2" disabled>NEXT ➜</button>
     </div>
   </section>
 
-  <section class="step">
+  <!-- STEP 2 -->
+  <section class="step" data-step="2" hidden>
     <h2><b>2</b> HOW BRAVE ARE WE?</h2>
+    <p class="picked" id="picked"></p>
     <div class="chips" id="chips">
       <button data-amt="10">10</button>
       <button data-amt="50">50</button>
@@ -88,19 +99,36 @@
     </div>
     <button class="place" id="place" disabled>PLACE BET 🎲</button>
     <p class="msg" id="msg" role="status"></p>
+    <div class="nav">
+      <button class="back" data-go="1">⬅ BACK</button>
+      <span></span>
+    </div>
   </section>
 
-  <section class="step">
+  <!-- STEP 3 -->
+  <section class="step" data-step="3" hidden>
     <h2><b>3</b> YOUR BET SLIP</h2>
     <ul id="slip" class="slip"></ul>
+    <div class="nav">
+      <button class="back" data-go="1">＋ ANOTHER BET</button>
+      <button class="next" data-go="4">NEXT ➜</button>
+    </div>
   </section>
 
-  <section class="step reveal">
+  <!-- STEP 4 -->
+  <section class="step reveal" data-step="4" hidden>
     <h2><b>4</b> THE MOMENT OF TRUTH</h2>
     <div id="locked" class="locked">
-      <div class="lock">🔒</div>
-      <strong>RESULT: TBC</strong>
-      <p>Unlocks when the countdown hits zero. Until then, nobody knows. Not even CY. 👀</p>
+      <div class="lock">🔔</div>
+      <strong>COME BACK TO FIND OUT</strong>
+      <p>CY's answer lands <b>Thursday 29 Oct, 12:00 PM (SGT)</b>. Bets close then and the result shows up right here. Until then, nobody knows. Not even CY. 👀</p>
+      <div class="cd" id="cd">
+        <div><b id="cd-d">00</b><small>days</small></div>
+        <div><b id="cd-h">00</b><small>hrs</small></div>
+        <div><b id="cd-m">00</b><small>min</small></div>
+        <div><b id="cd-s">00</b><small>sec</small></div>
+      </div>
+      <button class="remind" id="remind">🔔 REMIND ME · add to calendar</button>
     </div>
     <div id="settle-panel" hidden>
       <p class="small">Did CY actually text back? Settle all open bets:</p>
@@ -108,6 +136,12 @@
         <button id="settle-yes" class="yes">CY REPLIED 🎉</button>
         <button id="settle-no" class="no">LEFT ON READ 💀</button>
       </div>
+      <ul id="custom-settle" class="custom-settle" hidden></ul>
+    </div>
+    <p class="msg" id="msg-settle" role="status"></p>
+    <div class="nav">
+      <button class="back" data-go="3">⬅ BACK</button>
+      <span></span>
     </div>
   </section>
 

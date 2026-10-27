@@ -16,6 +16,9 @@
 
   let state = load();
   let side = null;
+  const CUSTOM_ODDS = 2;
+  const customText = () => $("custom-text").value.trim().slice(0, 60);
+  const pickValid = () => side === "yes" || side === "no" || (side === "custom" && customText().length > 0);
 
   function fresh() { return { balance: START, bets: [] }; }
   function load() {
@@ -29,10 +32,11 @@
 
   function pools() {
     const p = { yes: SEED.yes, no: SEED.no };
-    state.bets.filter((b) => b.status === "open").forEach((b) => (p[b.side] += b.amount));
+    state.bets.filter((b) => b.status === "open" && (b.side === "yes" || b.side === "no")).forEach((b) => (p[b.side] += b.amount));
     return p;
   }
   function oddsFor(s, p = pools()) {
+    if (s === "custom") return CUSTOM_ODDS;
     const total = p.yes + p.no;
     return Math.max(1.05, total / p[s]);
   }
@@ -49,6 +53,7 @@
     els.barYes.style.width = (p.yes / total) * 100 + "%";
     els.barNo.style.width = (p.no / total) * 100 + "%";
     renderSlip();
+    renderCustomSettle();
     updatePayout();
   }
 
@@ -59,7 +64,7 @@
       const left = document.createElement("div");
       const who = document.createElement("div");
       who.className = "who";
-      who.textContent = (b.side === "yes" ? "📱 CY replies" : "👻 CY ghosts") + " · " + fmt(b.amount) + " 🪙";
+      who.textContent = (b.side === "yes" ? "📱 CY replies" : b.side === "no" ? "👻 CY ghosts" : "✍️ “" + (b.text || "my prediction") + "”") + " · " + fmt(b.amount) + " 🪙";
       const meta = document.createElement("div");
       meta.className = "meta";
       const outcome = b.status === "won" ? "won " + fmt(b.payout) + " 🪙"
@@ -82,7 +87,7 @@
 
   function updatePayout() {
     const amt = currentAmount();
-    if (side && amt > 0) {
+    if (pickValid() && amt > 0) {
       // odds after your bet lands in the pot
       const p = pools();
       p[side] += amt;
@@ -90,25 +95,61 @@
     } else {
       els.potential.textContent = "—";
     }
-    els.place.disabled = isClosed() || !(side && amt > 0 && amt <= state.balance);
+    els.place.disabled = isClosed() || !(pickValid() && amt > 0 && amt <= state.balance);
     if (isClosed()) say("Bets are closed ⏰ the truth is out!", true);
     else if (amt > state.balance) say("Not enough coins, big spender 💸", true);
     else if (els.msg.classList.contains("err")) say("");
   }
 
-  function say(t, err) {
-    els.msg.textContent = t;
-    els.msg.classList.toggle("err", !!err);
+  function say(t, err, el = els.msg) {
+    el.textContent = t;
+    el.classList.toggle("err", !!err);
   }
 
   // pick side
+  function selectSide(s) {
+    side = s;
+    document.querySelectorAll(".opt").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.side === s)));
+    syncPick();
+  }
   document.querySelectorAll(".opt").forEach((btn) =>
     btn.addEventListener("click", () => {
-      side = btn.dataset.side;
-      document.querySelectorAll(".opt").forEach((b) => b.setAttribute("aria-pressed", String(b === btn)));
-      updatePayout();
+      selectSide(btn.dataset.side);
+      if (btn.dataset.side === "custom") $("custom-text").focus();
     })
   );
+  $("custom-text").addEventListener("input", () => { if (side !== "custom") selectSide("custom"); else syncPick(); });
+  $("custom-text").addEventListener("focus", () => { if (side !== "custom") selectSide("custom"); });
+
+  function pickLabel() {
+    return side === "yes" ? "📱 CY is going to reply"
+      : side === "no" ? "👻 CY is not replying"
+      : side === "custom" ? "✍️ “" + customText() + "”" : "";
+  }
+  function syncPick() {
+    const ok = pickValid();
+    $("to-2").disabled = !ok;
+    document.querySelector('.stepper [data-go="2"]').disabled = !ok;
+    $("picked").textContent = ok ? "Your pick: " + pickLabel() : "";
+    updatePayout();
+  }
+
+  // steps (pages)
+  const stepEls = [...document.querySelectorAll(".step")];
+  const pills = [...document.querySelectorAll(".stepper button")];
+  function go(n, scroll = true) {
+    if (n === 2 && !pickValid()) return;
+    stepEls.forEach((s) => (s.hidden = Number(s.dataset.step) !== n));
+    pills.forEach((p) => {
+      const k = Number(p.dataset.go);
+      p.classList.toggle("on", k === n);
+      p.classList.toggle("done", k < n);
+      if (k === n) p.setAttribute("aria-current", "step"); else p.removeAttribute("aria-current");
+    });
+    if (scroll) $("stepper").scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+  document.querySelectorAll("[data-go]").forEach((b) => b.addEventListener("click", () => go(Number(b.dataset.go))));
+  $("to-2").addEventListener("click", () => go(2));
 
   // chips
   $("chips").addEventListener("click", (e) => {
@@ -123,23 +164,27 @@
   // place bet
   els.place.addEventListener("click", () => {
     const amt = currentAmount();
-    if (isClosed() || !side || amt <= 0 || amt > state.balance) return;
+    if (isClosed() || !pickValid() || amt <= 0 || amt > state.balance) return;
     const p = pools();
-    p[side] += amt;
-    state.bets.push({ side, amount: amt, odds: oddsFor(side, p), status: "open" });
+    if (side !== "custom") p[side] += amt;
+    const bet = { id: Date.now().toString(36) + Math.random().toString(36).slice(2, 6), side, amount: amt, odds: oddsFor(side, p), status: "open" };
+    if (side === "custom") bet.text = customText();
+    state.bets.push(bet);
     state.balance -= amt;
     save();
     els.amount.value = "";
     say(amt === state.balance + amt ? "ALL IN?! Absolute madlad 🔥" : "Bet locked. No take-backs 🔒");
     els.balance.classList.remove("bump"); void els.balance.offsetWidth; els.balance.classList.add("bump");
     render();
+    go(3);
   });
 
   // settle
   function settle(outcome) {
-    if (!isClosed()) { say("Result is TBC. Wait for the countdown 👀", true); return; }
-    const open = state.bets.filter((b) => b.status === "open");
-    if (!open.length) { say("No open bets to settle!", true); return; }
+    const sm = $("msg-settle");
+    if (!isClosed()) { say("Result is TBC. Come back when the countdown hits zero 👀", true, sm); return; }
+    const open = state.bets.filter((b) => b.status === "open" && b.side !== "custom");
+    if (!open.length) { say("No open yes/no bets to settle!", true, sm); return; }
     let won = 0;
     open.forEach((b) => {
       if (b.side === outcome) {
@@ -153,18 +198,55 @@
     });
     save();
     render();
-    if (won > 0) { say("You won " + fmt(won) + " 🪙 — drinks on you 🥂"); confetti(); }
-    else say("Ouch. Better luck next time 💀");
-    if (state.balance <= 0) say("Broke. Hit reset for a fresh stash 🪙");
+    if (won > 0) { say("You won " + fmt(won) + " 🪙 — drinks on you 🥂", false, sm); confetti(); }
+    else say("Ouch. Better luck next time 💀", false, sm);
+    if (state.balance <= 0) say("Broke. Hit reset for a fresh stash 🪙", false, sm);
   }
   $("settle-yes").addEventListener("click", () => settle("yes"));
   $("settle-no").addEventListener("click", () => settle("no"));
+
+  // own-prediction bets are judged by the player
+  function renderCustomSettle() {
+    const ul = $("custom-settle");
+    ul.innerHTML = "";
+    const open = state.bets.filter((b) => b.side === "custom" && b.status === "open");
+    ul.hidden = !open.length;
+    open.forEach((b) => {
+      const li = document.createElement("li");
+      const t = document.createElement("div");
+      t.className = "who";
+      t.textContent = "✍️ “" + b.text + "” · " + fmt(b.amount) + " 🪙";
+      const row = document.createElement("div");
+      row.className = "row";
+      const yes = document.createElement("button");
+      yes.className = "yes"; yes.textContent = "HAPPENED 🎉";
+      yes.addEventListener("click", () => settleCustom(b.id, true));
+      const no = document.createElement("button");
+      no.className = "no"; no.textContent = "NOPE 💀";
+      no.addEventListener("click", () => settleCustom(b.id, false));
+      row.append(yes, no);
+      li.append(t, row);
+      ul.append(li);
+    });
+  }
+  function settleCustom(id, happened) {
+    if (!isClosed()) return;
+    const b = state.bets.find((x) => x.id === id && x.status === "open");
+    if (!b) return;
+    if (happened) { b.status = "won"; b.payout = Math.round(b.amount * b.odds); state.balance += b.payout; }
+    else b.status = "lost";
+    save();
+    render();
+    if (happened) { say("Called it! +" + fmt(b.payout) + " 🪙", false, $("msg-settle")); confetti(); }
+    else say("Not this time 💀", false, $("msg-settle"));
+  }
 
   $("reset").addEventListener("click", () => {
     if (!confirm("Reset your stash and clear all bets?")) return;
     state = fresh(); save(); side = null;
     document.querySelectorAll(".opt").forEach((b) => b.setAttribute("aria-pressed", "false"));
-    els.amount.value = ""; say("Fresh start ✨"); render();
+    $("custom-text").value = "";
+    els.amount.value = ""; say("Fresh start ✨"); say("", false, $("msg-settle")); render(); syncPick(); go(1);
   });
 
   // confetti
@@ -232,11 +314,6 @@
     $("cd-h").textContent = pad(Math.floor((t % 86400) / 3600));
     $("cd-m").textContent = pad(Math.floor((t % 3600) / 60));
     $("cd-s").textContent = pad(t % 60);
-    document.querySelector(".countdown").classList.toggle("done", closed);
-    $("cd-tag").textContent = closed ? "🚨 TIME'S UP" : "⏳ RESULT: TBC";
-    $("cd-note").textContent = closed
-      ? "Bets are closed. Time to find out what CY did."
-      : "Bets close & the result is revealed Thursday 29 Oct, 12:00 PM (SGT)";
     $("locked").hidden = closed;
     $("settle-panel").hidden = !closed;
     els.place.disabled = closed || els.place.disabled;
@@ -245,5 +322,28 @@
   const cdTimer = setInterval(tick, 1000);
   tick();
 
+  // "remind me" -> downloads a calendar event for the reveal time
+  $("remind").addEventListener("click", () => {
+    const stamp = (ms) => new Date(ms).toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
+    const ics = [
+      "BEGIN:VCALENDAR", "VERSION:2.0", "PRODID:-//will-cy-reply//EN", "BEGIN:VEVENT",
+      "UID:cy-reveal-" + DEADLINE + "@will-cy-reply",
+      "DTSTAMP:" + stamp(Date.now()),
+      "DTSTART:" + stamp(DEADLINE),
+      "DTEND:" + stamp(DEADLINE + 30 * 60000),
+      "SUMMARY:Will CY reply?! The truth drops",
+      "DESCRIPTION:Come back and settle your bets. " + location.href,
+      "BEGIN:VALARM", "TRIGGER:-PT10M", "ACTION:DISPLAY", "DESCRIPTION:CY reveal in 10 min", "END:VALARM",
+      "END:VEVENT", "END:VCALENDAR",
+    ].join("\r\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([ics], { type: "text/calendar" }));
+    a.download = "will-cy-reply.ics";
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  });
+
   render();
+  syncPick();
+  go(1, false);
 })();
